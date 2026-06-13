@@ -1,0 +1,64 @@
+{
+      "hello": "Hello",
+      "email": "Email",
+      "password": "Password",
+      "forgot_password": "Forgot Password?",
+      "signin": "Sign In",
+      "username": "Username",
+      "welcome_back": "Welcome Back",
+      "signin_subtitle": "Sign in to continue to your account",
+      "username_required": "Please enter your username",
+      "password_required": "Please enter your password",
+      "password_min_length": "Password must be at least 6 characters",
+      "dont_have_account": "Don't have an account?",
+      "signup": "Sign Up",
+
+      "speed_test": "Speed Test",
+      "start_test": "Start Test",
+      "stop_test": "Stop Test",
+      "download_speed": "Download Speed",
+      "upload_speed": "Upload Speed",
+      "ping": "Ping",
+      "testing_download": "Testing Download...",
+      "testing_upload": "Testing Upload...",
+      "test_completed": "Test Completed",
+      "mbps": "Mbps",
+      "ms": "ms",
+      "idle": "Tap Start to begin",
+      "test_again": "Test Again",
+
+      "connected_devices": "Connected Devices",
+      "scan_network": "Scan Network",
+      "scanning": "Scanning...",
+      "stop_scan": "Stop Scan",
+      "no_devices_found": "No devices found",
+      "devices_found": "{count} device(s) found",
+      "@devices_found": {
+        "placeholders": {
+          "count": {
+            "type": "int"
+          }
+        }
+      },
+      "device_details": "Device Details",
+      "ip_address": "IP Address",
+      "mac_address": "MAC Address",
+      "hostname": "Hostname",
+      "vendor": "Vendor",
+      "unknown": "Unknown",
+      "this_device": "This Device",
+      "active": "Active",
+      "filter_all": "All",
+      "filter_active": "Active",
+      "search_devices": "Search devices...",
+      "scan_progress": "Scanning: {progress}%",
+      "@scan_progress": {
+        "placeholders": {
+          "progress": {
+            "type": "int"
+          }
+        }
+      },
+      "network_error": "Network error. Please check your connection.",
+      "scan_complete": "Scan complete"
+    }

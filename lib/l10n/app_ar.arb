@@ -1,0 +1,64 @@
+{
+      "hello": "مرحبا",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "forgot_password": "نسيت كلمة المرور؟",
+      "signin": "تسجيل الدخول",
+      "username": "اسم المستخدم",
+      "welcome_back": "مرحباً بعودتك",
+      "signin_subtitle": "سجل دخولك للمتابعة إلى حسابك",
+      "username_required": "الرجاء إدخال اسم المستخدم",
+      "password_required": "الرجاء إدخال كلمة المرور",
+      "password_min_length": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+      "dont_have_account": "ليس لديك حساب؟",
+      "signup": "إنشاء حساب",
+
+      "speed_test": "اختبار السرعة",
+      "start_test": "بدء الاختبار",
+      "stop_test": "إيقاف الاختبار",
+      "download_speed": "سرعة التحميل",
+      "upload_speed": "سرعة الرفع",
+      "ping": "زمن الاستجابة",
+      "testing_download": "جاري اختبار التحميل...",
+      "testing_upload": "جاري اختبار الرفع...",
+      "test_completed": "اكتمل الاختبار",
+      "mbps": "ميجابت/ث",
+      "ms": "مللي ثانية",
+      "idle": "اضغط بدء للاختبار",
+      "test_again": "اختبار مرة أخرى",
+
+      "connected_devices": "الأجهزة المتصلة",
+      "scan_network": "فحص الشبكة",
+      "scanning": "جاري الفحص...",
+      "stop_scan": "إيقاف الفحص",
+      "no_devices_found": "لم يتم العثور على أجهزة",
+      "devices_found": "تم العثور على {count} جهاز",
+      "@devices_found": {
+        "placeholders": {
+          "count": {
+            "type": "int"
+          }
+        }
+      },
+      "device_details": "تفاصيل الجهاز",
+      "ip_address": "عنوان IP",
+      "mac_address": "عنوان MAC",
+      "hostname": "اسم المضيف",
+      "vendor": "المصنع",
+      "unknown": "غير معروف",
+      "this_device": "هذا الجهاز",
+      "active": "نشط",
+      "filter_all": "الكل",
+      "filter_active": "نشط",
+      "search_devices": "البحث عن الأجهزة...",
+      "scan_progress": "جاري الفحص: {progress}%",
+      "@scan_progress": {
+        "placeholders": {
+          "progress": {
+            "type": "int"
+          }
+        }
+      },
+      "network_error": "خطأ في الشبكة. يرجى التحقق من الاتصال.",
+      "scan_complete": "اكتمل الفحص"
+    }
