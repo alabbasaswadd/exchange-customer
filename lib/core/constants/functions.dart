@@ -2,7 +2,21 @@ import 'dart:convert';
 import 'package:exchange_customer/pages/auth/signin/model/signin_model.dart';
 import 'package:exchange_customer/pages/auth/signin/model/signin_response_model.dart';
 import 'package:exchange_customer/pages/auth/signin/model/user_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'cached/cached_helper.dart';
+
+void initFCM() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  await messaging.requestPermission();
+
+  // الحصول على التوكن
+  String? token = await messaging.getToken();
+  CacheHelper.setString("tokenFCM", token ?? "");
+  print("TOKEN: $token");
+}
 
 class UserPreferencesService {
   static const String _signinKey = 'signin_data';

@@ -6,8 +6,13 @@ part 'signin_request_model.g.dart';
 class SigninRequestModel {
   final String email;
   final String password;
+  final String tokenFcm;
 
-  SigninRequestModel({required this.email, required this.password});
+  SigninRequestModel({
+    required this.email,
+    required this.password,
+    required this.tokenFcm,
+  });
   factory SigninRequestModel.fromJson(Map<String, dynamic> json) {
     return _$SigninRequestModelFromJson(json);
   }

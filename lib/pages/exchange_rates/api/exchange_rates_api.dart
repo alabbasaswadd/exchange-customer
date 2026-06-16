@@ -8,6 +8,10 @@ class ExchangeRatesApi extends BaseApi {
 
   ExchangeRatesApi(this._service);
 
-  Future<ApiResult<List<ExchangeRateModel>>> getRates() =>
-      execute(request: () => _service.getExchangeRates());
+  Future<ApiResult<List<ExchangeRateModel>>> getRates() => execute(
+    request: () async {
+      final response = await _service.getExchangeRates();
+      return response.data ?? [];
+    },
+  );
 }

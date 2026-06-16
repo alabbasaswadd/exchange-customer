@@ -37,7 +37,8 @@ class HomeScreen extends StatelessWidget {
           ? AppColors.kBackgroundDark
           : const Color(0xFFF0F4F8),
       appBar: CustomAppBar(
-        title: 'مرحباً ${UserSession.firstName ?? UserSession.fullName ?? 'مستخدم'}',
+        title:
+            'مرحباً ${UserSession.firstName ?? UserSession.fullName ?? 'مستخدم'}',
         centerTitle: false,
         fontColor: Colors.white,
         backgroundColor: isDark
@@ -140,15 +141,13 @@ class _HomeBodyState extends State<_HomeBody>
         curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
       ),
     );
-    _slide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _slide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _ctrl,
+            curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
     _ctrl.forward();
   }
 
@@ -161,26 +160,36 @@ class _HomeBodyState extends State<_HomeBody>
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: FadeTransition(
-          opacity: _fade,
-          child: SlideTransition(
-            position: _slide,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                _buildRateCard(context),
-                const SizedBox(height: 16),
-                _buildSubmitButton(context),
-                const SizedBox(height: 32),
-                _buildAllRatesSection(context),
-                const SizedBox(height: 32),
-                _buildMyRequestsSection(context),
-                const SizedBox(height: 80),
-              ],
+      child: RefreshIndicator(
+        color: AppColors.kPrimaryColor,
+        onRefresh: () => Future.wait([
+          context.read<ExchangeRatesCubit>().fetchRates(),
+          context.read<CurrenciesCubit>().fetchCurrencies(),
+          context.read<ExchangeRequestsCubit>().fetchRequests(),
+        ]),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: FadeTransition(
+            opacity: _fade,
+            child: SlideTransition(
+              position: _slide,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildRateCard(context),
+                  const SizedBox(height: 16),
+                  _buildSubmitButton(context),
+                  // const SizedBox(height: 32),
+                  // _buildAllRatesSection(context),
+                  const SizedBox(height: 32),
+                  _buildMyRequestsSection(context),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
         ),
@@ -349,8 +358,10 @@ class _HomeBodyState extends State<_HomeBody>
                 orElse: () => <ExchangeRateModel>[],
               );
 
-              final currencies =
-                  context.read<CurrenciesCubit>().state.maybeWhen(
+              final currencies = context
+                  .read<CurrenciesCubit>()
+                  .state
+                  .maybeWhen(
                     success: (c) => c,
                     orElse: () => <CurrencyModel>[],
                   );
@@ -472,53 +483,53 @@ class _HomeBodyState extends State<_HomeBody>
 
   // ── All Exchange Rates Section ────────────────────────────────────────────
 
-  Widget _buildAllRatesSection(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(
-          'أسعار الصرف المتاحة',
-          Icons.list_alt_rounded,
-          isDark,
-        ),
-        const SizedBox(height: 14),
-        BlocBuilder<ExchangeRatesCubit, SigninState<List<ExchangeRateModel>>>(
-          builder: (context, state) {
-            return state.when(
-              initial: () => const SizedBox.shrink(),
-              loading: () => _listShimmer(isDark),
-              success: (rates) {
-                if (rates.isEmpty) {
-                  return _emptyState('لا توجد أسعار صرف متاحة حالياً');
-                }
-                return Column(
-                  children: rates.asMap().entries.map((e) {
-                    return _RateItem(
-                      rate: e.value,
-                      isDark: isDark,
-                      isLast: e.key == rates.length - 1,
-                      onTap: () {
-                        final fc = e.value.fromCurrency?.code ?? '';
-                        final tc = e.value.toCurrency?.code ?? '';
-                        if (fc.isNotEmpty && tc.isNotEmpty) {
-                          setState(() {
-                            _fromCode = fc;
-                            _toCode = tc;
-                          });
-                        }
-                      },
-                    );
-                  }).toList(),
-                );
-              },
-              error: (_) => _emptyState('تعذّر تحميل الأسعار'),
-            );
-          },
-        ),
-      ],
-    );
-  }
+  // Widget _buildAllRatesSection(BuildContext context) {
+  //   final isDark = Theme.of(context).brightness == Brightness.dark;
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _sectionHeader(
+  //         'أسعار الصرف المتاحة',
+  //         Icons.list_alt_rounded,
+  //         isDark,
+  //       ),
+  //       const SizedBox(height: 14),
+  //       BlocBuilder<ExchangeRatesCubit, SigninState<List<ExchangeRateModel>>>(
+  //         builder: (context, state) {
+  //           return state.when(
+  //             initial: () => const SizedBox.shrink(),
+  //             loading: () => _listShimmer(isDark),
+  //             success: (rates) {
+  //               if (rates.isEmpty) {
+  //                 return _emptyState('لا توجد أسعار صرف متاحة حالياً');
+  //               }
+  //               return Column(
+  //                 children: rates.asMap().entries.map((e) {
+  //                   return _RateItem(
+  //                     rate: e.value,
+  //                     isDark: isDark,
+  //                     isLast: e.key == rates.length - 1,
+  //                     onTap: () {
+  //                       final fc = e.value.fromCurrency?.code ?? '';
+  //                       final tc = e.value.toCurrency?.code ?? '';
+  //                       if (fc.isNotEmpty && tc.isNotEmpty) {
+  //                         setState(() {
+  //                           _fromCode = fc;
+  //                           _toCode = tc;
+  //                         });
+  //                       }
+  //                     },
+  //                   );
+  //                 }).toList(),
+  //               );
+  //             },
+  //             error: (_) => _emptyState('تعذّر تحميل الأسعار'),
+  //           );
+  //         },
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // ── My Requests Section ───────────────────────────────────────────────────
 
@@ -686,6 +697,7 @@ class _HomeBodyState extends State<_HomeBody>
         providers: [
           BlocProvider.value(value: context.read<ExchangeRequestsCubit>()),
           BlocProvider.value(value: context.read<CurrenciesCubit>()),
+          BlocProvider.value(value: context.read<ExchangeRatesCubit>()),
         ],
         child: const _SubmitSheet(),
       ),
@@ -743,29 +755,10 @@ class _CurrencyButton extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: AppText(
-                    currency?.symbol ??
-                        (code.isNotEmpty ? code[0] : '?'),
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       AppText(
                         code.isEmpty ? '—' : code,
@@ -875,8 +868,7 @@ class _RateItem extends StatelessWidget {
     final fromCode = rate.fromCurrency?.code ?? '?';
     final toCode = rate.toCurrency?.code ?? '?';
     final fromSymbol =
-        rate.fromCurrency?.symbol ??
-        (fromCode.isNotEmpty ? fromCode[0] : '?');
+        rate.fromCurrency?.symbol ?? (fromCode.isNotEmpty ? fromCode[0] : '?');
     final toSymbol =
         rate.toCurrency?.symbol ?? (toCode.isNotEmpty ? toCode[0] : '?');
 
@@ -975,7 +967,11 @@ class _RateItem extends StatelessWidget {
                           color: AppColors.kGreyColor,
                         ),
                       ),
-                      AppText(toCode, fontSize: 14, fontWeight: FontWeight.w700),
+                      AppText(
+                        toCode,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ],
                   ),
                   if (rate.fromCurrency?.name != null)
@@ -1059,11 +1055,7 @@ class _RequestItem extends StatelessWidget {
       color: AppColors.kSuccessColor,
       label: 'مقبول',
     ),
-    2: (
-      icon: Icons.cancel_rounded,
-      color: AppColors.kRedColor,
-      label: 'مرفوض',
-    ),
+    2: (icon: Icons.cancel_rounded, color: AppColors.kRedColor, label: 'مرفوض'),
     3: (
       icon: Icons.pause_circle_rounded,
       color: AppColors.kGreyColor,
@@ -1090,7 +1082,8 @@ class _RequestItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cfg = _statusConfig[request.status] ??
+    final cfg =
+        _statusConfig[request.status] ??
         (
           icon: Icons.help_outline_rounded,
           color: AppColors.kGreyColor,
@@ -1235,12 +1228,47 @@ class _SubmitSheet extends StatefulWidget {
 class _SubmitSheetState extends State<_SubmitSheet> {
   CurrencyModel? _fromCurrency;
   CurrencyModel? _toCurrency;
+  TextEditingController? _amountController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_amountController == null) {
+      _amountController =
+          context.read<ExchangeRequestsCubit>().amountController;
+      _amountController!.addListener(_onAmountChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _amountController?.removeListener(_onAmountChanged);
+    super.dispose();
+  }
+
+  void _onAmountChanged() => setState(() {});
+
+  ExchangeRateModel? _matchingRate(List<ExchangeRateModel> rates) {
+    if (_fromCurrency == null || _toCurrency == null) return null;
+    try {
+      return rates.firstWhere(
+        (r) =>
+            r.fromCurrencyId == _fromCurrency!.id &&
+            r.toCurrencyId == _toCurrency!.id,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ExchangeRequestsCubit>();
 
-    return BlocConsumer<ExchangeRequestsCubit, SigninState<List<ExchangeRequestModel>>>(
+    return BlocConsumer<
+      ExchangeRequestsCubit,
+      SigninState<List<ExchangeRequestModel>>
+    >(
       listenWhen: (p, c) =>
           p.maybeWhen(loading: () => true, orElse: () => false),
       listener: (context, state) {
@@ -1330,6 +1358,37 @@ class _SubmitSheetState extends State<_SubmitSheet> {
                           return 'يجب أن يكون المبلغ أكبر من صفر';
                         }
                         return null;
+                      },
+                    ),
+                    BlocBuilder<ExchangeRatesCubit,
+                        SigninState<List<ExchangeRateModel>>>(
+                      builder: (context, rateState) {
+                        final rates = rateState.maybeWhen(
+                          success: (data) => data,
+                          orElse: () => <ExchangeRateModel>[],
+                        );
+                        final rate = _matchingRate(rates);
+                        final amount = double.tryParse(
+                          cubit.amountController.text,
+                        );
+                        if (rate == null ||
+                            amount == null ||
+                            amount <= 0 ||
+                            rate.buyRate == null) {
+                          return const SizedBox.shrink();
+                        }
+                        final commission = (rate.commissionPercent ?? 0) / 100;
+                        final gross = amount * rate.buyRate!;
+                        final commissionAmount = gross * commission;
+                        final net = gross - commissionAmount;
+                        return _ExchangePreviewCard(
+                          fromCode: _fromCurrency?.code ?? '',
+                          toCode: _toCurrency?.code ?? '',
+                          rate: rate.buyRate!,
+                          commissionPercent: rate.commissionPercent ?? 0,
+                          commissionAmount: commissionAmount,
+                          netAmount: net,
+                        );
                       },
                     ),
                     AppTextFormField(
@@ -1448,9 +1507,10 @@ class _CurrencySelector extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: AppText(
-                  currency!.symbol ?? (currency!.code?.isNotEmpty == true
-                      ? currency!.code![0]
-                      : '?'),
+                  currency!.symbol ??
+                      (currency!.code?.isNotEmpty == true
+                          ? currency!.code![0]
+                          : '?'),
                   fontSize: 12,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -1485,9 +1545,7 @@ class _CurrencySelector extends StatelessWidget {
                     selected ? (currency!.code ?? '') : 'اختر',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: selected
-                        ? null
-                        : AppColors.kGreyColor,
+                    color: selected ? null : AppColors.kGreyColor,
                   ),
                 ],
               ),
@@ -1552,12 +1610,15 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const AppText('اختر العملة', fontSize: 16, fontWeight: FontWeight.w700),
+          const AppText(
+            'اختر العملة',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
           const SizedBox(height: 14),
           // Search
           TextField(
-            onChanged: (v) =>
-                setState(() => _query = v.toLowerCase().trim()),
+            onChanged: (v) => setState(() => _query = v.toLowerCase().trim()),
             style: const TextStyle(fontFamily: 'Cairo-Bold', fontSize: 13),
             decoration: InputDecoration(
               hintText: 'ابحث عن عملة...',
@@ -1705,6 +1766,126 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXCHANGE CALCULATION PREVIEW CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ExchangePreviewCard extends StatelessWidget {
+  final String fromCode;
+  final String toCode;
+  final double rate;
+  final int commissionPercent;
+  final double commissionAmount;
+  final double netAmount;
+
+  const _ExchangePreviewCard({
+    required this.fromCode,
+    required this.toCode,
+    required this.rate,
+    required this.commissionPercent,
+    required this.commissionAmount,
+    required this.netAmount,
+  });
+
+  String _fmt(double v) {
+    if (v == v.truncateToDouble()) return v.toStringAsFixed(0);
+    return v.toStringAsFixed(2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.kPrimaryColorDarkMode.withValues(alpha: 0.15)
+            : AppColors.kPrimaryColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.kPrimaryColor.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.calculate_rounded,
+                size: 15,
+                color: AppColors.kPrimaryColor,
+              ),
+              const SizedBox(width: 5),
+              AppText(
+                'تقدير المبلغ المستلم',
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.kPrimaryColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _Row(label: 'سعر الصرف ($fromCode/$toCode)', value: _fmt(rate)),
+              _Row(label: 'العمولة', value: '$commissionPercent%'),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _Row(
+                label: 'مبلغ العمولة',
+                value: '${_fmt(commissionAmount)} $toCode',
+              ),
+              const SizedBox.shrink(),
+            ],
+          ),
+          const Divider(height: 16, thickness: 0.5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AppText(
+                'المبلغ المتوقع',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+              AppText(
+                '${_fmt(netAmount)} $toCode',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.kPrimaryColor,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  final String label;
+  final String value;
+  const _Row({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(label, fontSize: 10, color: AppColors.kGreyColor),
+        AppText(value, fontSize: 12, fontWeight: FontWeight.w600),
+      ],
     );
   }
 }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "598863758063",
+    "project_id": "exchange-admin-69ecb",
+    "storage_bucket": "exchange-admin-69ecb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598863758063:android:937d1e70676cea8b5ad11a",
+        "android_client_info": {
+          "package_name": "com.example.exchange_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARmzIPi5ydTQByL9hwXKCNCyapHOPnwaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598863758063:android:d3bb27bfa5844a7a5ad11a",
+        "android_client_info": {
+          "package_name": "com.example.exchange_customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARmzIPi5ydTQByL9hwXKCNCyapHOPnwaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:exchange_customer/core/networking/api_constans.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/create_exchange_request_model.dart';
-import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_model.dart';
+import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_list_response_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_response_model.dart';
 import 'package:retrofit/error_logger.dart';
@@ -14,8 +14,8 @@ abstract class ExchangeRequestsApiService {
   factory ExchangeRequestsApiService(Dio dio, {String baseUrl}) =
       _ExchangeRequestsApiService;
 
-  @GET(ApiConstants.exchangeRequests)
-  Future<List<ExchangeRequestModel>> getExchangeRequests();
+  @GET(ApiConstants.getExchangeRequests)
+  Future<ExchangeRequestListResponseModel> getExchangeRequests();
 
   @POST(ApiConstants.exchangeRequests)
   Future<ExchangeRequestResponseModel> createExchangeRequest(

@@ -13,6 +13,7 @@ class ApiConstants {
   static const String currencies = "User/Currency";
 
   static const String exchangeRequests = "User/ExchangeRequest";
+  static const String getExchangeRequests = "User/ExchangeRequest/my-requests";
   // Notifications
   // static const String notifications = "v1/Notification/GetAll";
   // static const String notificationMarkAsRead = "v1/Notification/MarkAsRead";

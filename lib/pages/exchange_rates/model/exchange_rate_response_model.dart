@@ -7,7 +7,7 @@ part 'exchange_rate_response_model.g.dart';
 @JsonSerializable()
 class ExchangeRateResponseModel {
   final bool? succeeded;
-  final ExchangeRateModel? data;
+  final List<ExchangeRateModel>? data;
   final ErrorModel? error;
 
   ExchangeRateResponseModel({this.succeeded, this.data, this.error});

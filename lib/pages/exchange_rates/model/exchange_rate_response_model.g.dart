@@ -10,9 +10,9 @@ ExchangeRateResponseModel _$ExchangeRateResponseModelFromJson(
   Map<String, dynamic> json,
 ) => ExchangeRateResponseModel(
   succeeded: json['succeeded'] as bool?,
-  data: json['data'] == null
-      ? null
-      : ExchangeRateModel.fromJson(json['data'] as Map<String, dynamic>),
+  data: (json['data'] as List<dynamic>?)
+      ?.map((e) => ExchangeRateModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
   error: json['error'] == null
       ? null
       : ErrorModel.fromJson(json['error'] as Map<String, dynamic>),

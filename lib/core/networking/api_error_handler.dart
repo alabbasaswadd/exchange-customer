@@ -158,21 +158,17 @@ ErrorModel _handleError(DioException error) {
     case DioExceptionType.receiveTimeout:
       return DataSource.RECIEVE_TIMEOUT.getFailure();
     case DioExceptionType.badResponse:
-      if (error.response != null &&
-          error.response?.statusCode != null &&
-          error.response?.statusMessage != null) {
-        return ErrorModel.fromJson(error.response!.data);
-      } else {
-        return DataSource.DEFAULT.getFailure();
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        return ErrorModel.fromJson(data);
       }
+      return DataSource.DEFAULT.getFailure();
     case DioExceptionType.unknown:
-      if (error.response != null &&
-          error.response?.statusCode != null &&
-          error.response?.statusMessage != null) {
-        return ErrorModel.fromJson(error.response!.data);
-      } else {
-        return DataSource.DEFAULT.getFailure();
+      final unknownData = error.response?.data;
+      if (unknownData is Map<String, dynamic>) {
+        return ErrorModel.fromJson(unknownData);
       }
+      return DataSource.DEFAULT.getFailure();
     case DioExceptionType.cancel:
       return DataSource.CANCEL.getFailure();
     case DioExceptionType.connectionError:

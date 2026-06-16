@@ -22,12 +22,12 @@ class _ExchangeRatesApiService implements ExchangeRatesApiService {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<List<ExchangeRateModel>> getExchangeRates() async {
+  Future<ExchangeRateResponseModel> getExchangeRates() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<ExchangeRateModel>>(
+    final _options = _setStreamType<ExchangeRateResponseModel>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -37,15 +37,10 @@ class _ExchangeRatesApiService implements ExchangeRatesApiService {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<ExchangeRateModel> _value;
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ExchangeRateResponseModel _value;
     try {
-      _value = _result.data!
-          .map(
-            (dynamic i) =>
-                ExchangeRateModel.fromJson(i as Map<String, dynamic>),
-          )
-          .toList();
+      _value = ExchangeRateResponseModel.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

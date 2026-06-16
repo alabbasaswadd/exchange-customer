@@ -15,8 +15,12 @@ class ExchangeRequestsApi extends BaseApi {
     CreateExchangeRequestModel data,
   ) => execute(request: () => _service.createExchangeRequest(data));
 
-  Future<ApiResult<List<ExchangeRequestModel>>> getRequests() =>
-      execute(request: () => _service.getExchangeRequests());
+  Future<ApiResult<List<ExchangeRequestModel>>> getRequests() => execute(
+    request: () async {
+      final response = await _service.getExchangeRequests();
+      return response.data ?? [];
+    },
+  );
 
   Future<ApiResult<ExchangeRequestResponseModel>> updateRequest(
     String id,
