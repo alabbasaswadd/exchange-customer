@@ -4,6 +4,7 @@ import 'package:exchange_customer/core/components/app_text.dart';
 import 'package:exchange_customer/core/constants/colors.dart';
 import 'package:exchange_customer/pages/auth/signin/cubit/signin_state.dart';
 import 'package:exchange_customer/pages/exchange_requests/cubit/exchange_requests_cubit.dart';
+import 'package:exchange_customer/pages/exchange_requests/model/exchange_filter_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_request_model.dart';
 import 'package:flutter/material.dart';
@@ -17,14 +18,6 @@ class ExchangeRequestsScreen extends StatefulWidget {
 }
 
 class _ExchangeRequestsScreenState extends State<ExchangeRequestsScreen> {
-  static const _filters = <(int?, String)>[
-    (null, 'الكل'),
-    (0, 'معلقة'),
-    (1, 'مقبولة'),
-    (2, 'مرفوضة'),
-    (3, 'موقوفة'),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -35,13 +28,11 @@ class _ExchangeRequestsScreenState extends State<ExchangeRequestsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.kBackgroundDark
-          : const Color(0xFFF0F4F8),
+      backgroundColor:
+          isDark ? AppColors.kBackgroundDark : const Color(0xFFF0F4F8),
       appBar: AppBar(
-        backgroundColor: isDark
-            ? AppColors.kPrimaryColorDarkMode
-            : AppColors.kPrimaryColor,
+        backgroundColor:
+            isDark ? AppColors.kPrimaryColorDarkMode : AppColors.kPrimaryColor,
         foregroundColor: Colors.white,
         title: const AppText(
           'سجل طلبات الصرف',
@@ -51,43 +42,97 @@ class _ExchangeRequestsScreenState extends State<ExchangeRequestsScreen> {
         ),
         centerTitle: false,
         elevation: 0,
-      ),
-      body:
-          BlocConsumer<
-            ExchangeRequestsCubit,
-            SigninState<List<ExchangeRequestModel>>
-          >(
-            listenWhen: (prev, curr) =>
-                prev.maybeWhen(loading: () => true, orElse: () => false),
-            listener: (context, state) {
-              state.maybeWhen(
-                error: (msg) => AppSnackbar.showError(context, msg),
-                orElse: () {},
-              );
-            },
-            builder: (context, state) {
+        actions: [
+          BlocBuilder<ExchangeRequestsCubit,
+              SigninState<List<ExchangeRequestModel>>>(
+            builder: (context, _) {
               final cubit = context.read<ExchangeRequestsCubit>();
-              return Column(
+              final count = cubit.filter.activeCount;
+              return Stack(
+                alignment: Alignment.center,
                 children: [
-                  _FilterChips(filters: _filters, cubit: cubit, isDark: isDark),
-                  Expanded(
-                    child: RefreshIndicator(
-                      color: AppColors.kPrimaryColor,
-                      onRefresh: () => cubit.fetchRequests(),
-                      child: state.when(
-                        initial: () => const SizedBox.shrink(),
-                        loading: () => _buildShimmer(),
-                        success: (requests) => requests.isEmpty
-                            ? _buildEmpty()
-                            : _buildList(requests, cubit),
-                        error: (msg) => _buildError(msg, cubit),
+                  IconButton(
+                    icon: const Icon(Icons.tune_rounded, color: Colors.white),
+                    onPressed: () => _openFilterSheet(context, cubit),
+                    tooltip: 'تصفية الطلبات',
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: AppColors.kWarningColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: AppText(
+                            '$count',
+                            fontSize: 9,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               );
             },
           ),
+        ],
+      ),
+      body: BlocConsumer<ExchangeRequestsCubit,
+          SigninState<List<ExchangeRequestModel>>>(
+        listenWhen: (prev, curr) =>
+            prev.maybeWhen(loading: () => true, orElse: () => false),
+        listener: (context, state) {
+          state.maybeWhen(
+            error: (msg) => AppSnackbar.showError(context, msg),
+            orElse: () {},
+          );
+        },
+        builder: (context, state) {
+          final cubit = context.read<ExchangeRequestsCubit>();
+          return Column(
+            children: [
+              _ActiveFilterBar(
+                filter: cubit.filter,
+                cubit: cubit,
+                onOpenFilter: () => _openFilterSheet(context, cubit),
+                isDark: isDark,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.kPrimaryColor,
+                  onRefresh: () => cubit.fetchRequests(),
+                  child: state.when(
+                    initial: () => const SizedBox.shrink(),
+                    loading: () => _buildShimmer(),
+                    success: (requests) => requests.isEmpty
+                        ? _buildEmpty()
+                        : _buildList(requests, cubit),
+                    error: (msg) => _buildError(msg, cubit),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openFilterSheet(BuildContext context, ExchangeRequestsCubit cubit) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _FilterSheet(
+        initial: cubit.filter,
+        onApply: cubit.applyFilter,
+      ),
     );
   }
 
@@ -194,62 +239,790 @@ class _ExchangeRequestsScreenState extends State<ExchangeRequestsScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FILTER CHIPS
+// ACTIVE FILTER BAR
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _FilterChips extends StatelessWidget {
-  final List<(int?, String)> filters;
+class _ActiveFilterBar extends StatelessWidget {
+  final ExchangeFilterModel filter;
   final ExchangeRequestsCubit cubit;
+  final VoidCallback onOpenFilter;
   final bool isDark;
 
-  const _FilterChips({
-    required this.filters,
+  static const _statusLabels = {
+    0: 'معلقة',
+    1: 'مقبولة',
+    2: 'مرفوضة',
+    3: 'موقوفة',
+  };
+
+  const _ActiveFilterBar({
+    required this.filter,
     required this.cubit,
+    required this.onOpenFilter,
     required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-      ExchangeRequestsCubit,
-      SigninState<List<ExchangeRequestModel>>
-    >(
-      buildWhen: (prev, curr) =>
-          prev.maybeWhen(success: (_) => true, orElse: () => false),
-      builder: (context, _) {
-        return Container(
-          color: isDark ? AppColors.kCardDark : Colors.white,
-          child: SizedBox(
-            height: 52,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: filters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) {
-                final (value, label) = filters[index];
-                final isSelected = cubit.statusFilter == value;
-                return FilterChip(
-                  label: Text(label),
-                  selected: isSelected,
-                  onSelected: (_) => cubit.setFilter(value),
-                  selectedColor: AppColors.kPrimaryColor.withValues(
-                    alpha: 0.15,
+    if (!filter.isActive) return const SizedBox.shrink();
+
+    final chips = <_FilterChipData>[];
+
+    if (filter.statuses.isNotEmpty) {
+      final labels =
+          filter.statuses.map((s) => _statusLabels[s] ?? '').join('، ');
+      chips.add(_FilterChipData(
+        label: 'الحالة: $labels',
+        onRemove: () => cubit.applyFilter(ExchangeFilterModel(
+          dateFrom: filter.dateFrom,
+          dateTo: filter.dateTo,
+          minAmount: filter.minAmount,
+          maxAmount: filter.maxAmount,
+        )),
+      ));
+    }
+
+    if (filter.dateFrom != null || filter.dateTo != null) {
+      final from = filter.dateFrom != null
+          ? '${filter.dateFrom!.day}/${filter.dateFrom!.month}'
+          : '...';
+      final to = filter.dateTo != null
+          ? '${filter.dateTo!.day}/${filter.dateTo!.month}'
+          : '...';
+      chips.add(_FilterChipData(
+        label: 'التاريخ: $from ← $to',
+        onRemove: () => cubit.applyFilter(ExchangeFilterModel(
+          statuses: filter.statuses,
+          minAmount: filter.minAmount,
+          maxAmount: filter.maxAmount,
+        )),
+      ));
+    }
+
+    if (filter.minAmount != null || filter.maxAmount != null) {
+      final min = filter.minAmount?.toStringAsFixed(0) ?? '...';
+      final max = filter.maxAmount?.toStringAsFixed(0) ?? '...';
+      chips.add(_FilterChipData(
+        label: 'المبلغ: $min — $max',
+        onRemove: () => cubit.applyFilter(ExchangeFilterModel(
+          statuses: filter.statuses,
+          dateFrom: filter.dateFrom,
+          dateTo: filter.dateTo,
+        )),
+      ));
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.kCardDark : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.kGreyColor.withValues(alpha: 0.1),
+          ),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: onOpenFilter,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimaryColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.tune_rounded,
+                      size: 13,
+                      color: AppColors.kPrimaryColor,
+                    ),
+                    const SizedBox(width: 4),
+                    AppText(
+                      'فلتر نشط (${filter.activeCount})',
+                      fontSize: 11,
+                      color: AppColors.kPrimaryColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ...chips.map(
+              (c) => Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: InkWell(
+                  onTap: c.onRemove,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.kGreyColor.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppText(
+                          c.label,
+                          fontSize: 11,
+                          color: AppColors.kGreyColor,
+                        ),
+                        const SizedBox(width: 5),
+                        Icon(
+                          Icons.close_rounded,
+                          size: 12,
+                          color: AppColors.kGreyColor.withValues(alpha: 0.7),
+                        ),
+                      ],
+                    ),
                   ),
-                  checkmarkColor: AppColors.kPrimaryColor,
-                  labelStyle: TextStyle(
-                    color: isSelected
-                        ? AppColors.kPrimaryColor
-                        : AppColors.kGreyColor,
-                    fontFamily: 'Cairo-Bold',
-                    fontSize: 12,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: () => cubit.applyFilter(const ExchangeFilterModel()),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.kRedColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.kRedColor.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.refresh_rounded,
+                      size: 12,
+                      color: AppColors.kRedColor.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    AppText(
+                      'مسح الكل',
+                      fontSize: 11,
+                      color: AppColors.kRedColor.withValues(alpha: 0.8),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChipData {
+  final String label;
+  final VoidCallback onRemove;
+  const _FilterChipData({required this.label, required this.onRemove});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTER SHEET
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FilterSheet extends StatefulWidget {
+  final ExchangeFilterModel initial;
+  final void Function(ExchangeFilterModel) onApply;
+
+  const _FilterSheet({required this.initial, required this.onApply});
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late List<int> _statuses;
+  DateTime? _dateFrom;
+  DateTime? _dateTo;
+  final _minCtrl = TextEditingController();
+  final _maxCtrl = TextEditingController();
+
+  static const _statusConfig = {
+    0: (
+      color: Color(0xFFF59E0B),
+      label: 'معلقة',
+      icon: Icons.hourglass_empty_rounded,
+    ),
+    1: (
+      color: Color(0xFF16A34A),
+      label: 'مقبولة',
+      icon: Icons.check_circle_rounded,
+    ),
+    2: (
+      color: Color(0xFFDC2626),
+      label: 'مرفوضة',
+      icon: Icons.cancel_rounded,
+    ),
+    3: (
+      color: Color(0xFF64748B),
+      label: 'موقوفة',
+      icon: Icons.pause_circle_rounded,
+    ),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _statuses = List.from(widget.initial.statuses);
+    _dateFrom = widget.initial.dateFrom;
+    _dateTo = widget.initial.dateTo;
+    _minCtrl.text = widget.initial.minAmount?.toStringAsFixed(0) ?? '';
+    _maxCtrl.text = widget.initial.maxAmount?.toStringAsFixed(0) ?? '';
+  }
+
+  @override
+  void dispose() {
+    _minCtrl.dispose();
+    _maxCtrl.dispose();
+    super.dispose();
+  }
+
+  void _toggleStatus(int value) {
+    setState(() {
+      if (_statuses.contains(value)) {
+        _statuses.remove(value);
+      } else {
+        _statuses.add(value);
+      }
+    });
+  }
+
+  Future<void> _pickDate(bool isFrom) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isFrom
+          ? (_dateFrom ?? now)
+          : (_dateTo ?? (_dateFrom != null ? _dateFrom! : now)),
+      firstDate: isFrom ? DateTime(2020) : (_dateFrom ?? DateTime(2020)),
+      lastDate: isFrom ? (_dateTo ?? now) : now,
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.kPrimaryColor,
+            onSurface: AppColors.kFontColor,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        if (isFrom) {
+          _dateFrom = picked;
+        } else {
+          _dateTo = picked;
+        }
+      });
+    }
+  }
+
+  void _clearAll() {
+    setState(() {
+      _statuses.clear();
+      _dateFrom = null;
+      _dateTo = null;
+      _minCtrl.clear();
+      _maxCtrl.clear();
+    });
+  }
+
+  void _apply() {
+    final minText = _minCtrl.text.trim();
+    final maxText = _maxCtrl.text.trim();
+    widget.onApply(ExchangeFilterModel(
+      statuses: List.from(_statuses),
+      dateFrom: _dateFrom,
+      dateTo: _dateTo,
+      minAmount: minText.isEmpty ? null : double.tryParse(minText),
+      maxAmount: maxText.isEmpty ? null : double.tryParse(maxText),
+    ));
+    Navigator.pop(context);
+  }
+
+  bool get _hasChanges {
+    final min = _minCtrl.text.trim();
+    final max = _maxCtrl.text.trim();
+    return _statuses.isNotEmpty ||
+        _dateFrom != null ||
+        _dateTo != null ||
+        min.isNotEmpty ||
+        max.isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.kCardDark : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 12,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.kGreyColor.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // ── Header ──
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    size: 18,
+                    color: AppColors.kPrimaryColor,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const AppText(
+                  'تصفية الطلبات',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _clearAll,
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    size: 15,
+                    color: AppColors.kGreyColor,
+                  ),
+                  label: const AppText(
+                    'مسح الكل',
+                    fontSize: 13,
+                    color: AppColors.kGreyColor,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.kGreyColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // ── Section 1: Status ──
+            _SectionLabel(
+              icon: Icons.flag_outlined,
+              label: 'الحالة',
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _statusConfig.entries.map((entry) {
+                final value = entry.key;
+                final cfg = entry.value;
+                final selected = _statuses.contains(value);
+                return GestureDetector(
+                  onTap: () => _toggleStatus(value),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? cfg.color.withValues(alpha: 0.12)
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : const Color(0xFFF8FAFC)),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected
+                            ? cfg.color.withValues(alpha: 0.6)
+                            : AppColors.kGreyColor.withValues(alpha: 0.2),
+                        width: selected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          cfg.icon,
+                          size: 14,
+                          color: selected ? cfg.color : AppColors.kGreyColor,
+                        ),
+                        const SizedBox(width: 6),
+                        AppText(
+                          cfg.label,
+                          fontSize: 13,
+                          color: selected ? cfg.color : AppColors.kGreyColor,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                        ),
+                        if (selected) ...[
+                          const SizedBox(width: 5),
+                          Icon(
+                            Icons.check_rounded,
+                            size: 13,
+                            color: cfg.color,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 );
-              },
+              }).toList(),
             ),
+            const SizedBox(height: 24),
+            Divider(
+              height: 1,
+              color: AppColors.kGreyColor.withValues(alpha: 0.12),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Section 2: Date Range ──
+            _SectionLabel(
+              icon: Icons.calendar_today_outlined,
+              label: 'نطاق التاريخ',
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _DatePickerButton(
+                    label: 'من',
+                    date: _dateFrom,
+                    onTap: () => _pickDate(true),
+                    onClear: _dateFrom != null
+                        ? () => setState(() => _dateFrom = null)
+                        : null,
+                    isDark: isDark,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Icon(
+                    Icons.swap_horiz_rounded,
+                    size: 20,
+                    color: AppColors.kGreyColor.withValues(alpha: 0.5),
+                  ),
+                ),
+                Expanded(
+                  child: _DatePickerButton(
+                    label: 'إلى',
+                    date: _dateTo,
+                    onTap: () => _pickDate(false),
+                    onClear: _dateTo != null
+                        ? () => setState(() => _dateTo = null)
+                        : null,
+                    isDark: isDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Divider(
+              height: 1,
+              color: AppColors.kGreyColor.withValues(alpha: 0.12),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Section 3: Amount Range ──
+            _SectionLabel(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'نطاق المبلغ',
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _AmountField(
+                    controller: _minCtrl,
+                    hint: 'الحد الأدنى',
+                    isDark: isDark,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: AppText(
+                    '—',
+                    color: AppColors.kGreyColor.withValues(alpha: 0.5),
+                    fontSize: 18,
+                  ),
+                ),
+                Expanded(
+                  child: _AmountField(
+                    controller: _maxCtrl,
+                    hint: 'الحد الأقصى',
+                    isDark: isDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+
+            // ── Action Buttons ──
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(
+                        color: AppColors.kGreyColor.withValues(alpha: 0.3),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const AppText(
+                      'إلغاء',
+                      color: AppColors.kGreyColor,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: AppButton(
+                    text: _hasChanges ? 'تطبيق الفلتر' : 'تطبيق',
+                    icon: _hasChanges ? Icons.check_rounded : null,
+                    onPressed: _apply,
+                    height: 48,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTER SHEET HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+
+  const _SectionLabel({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 18,
+          decoration: BoxDecoration(
+            color: AppColors.kPrimaryColor,
+            borderRadius: BorderRadius.circular(2),
           ),
-        );
-      },
+        ),
+        const SizedBox(width: 8),
+        Icon(icon, size: 15, color: AppColors.kPrimaryColor),
+        const SizedBox(width: 6),
+        AppText(label, fontSize: 14, fontWeight: FontWeight.w700),
+      ],
+    );
+  }
+}
+
+class _DatePickerButton extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+  final VoidCallback? onClear;
+  final bool isDark;
+
+  const _DatePickerButton({
+    required this.label,
+    required this.date,
+    required this.onTap,
+    required this.onClear,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDate = date != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: hasDate
+              ? AppColors.kPrimaryColor.withValues(alpha: 0.07)
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : const Color(0xFFF8FAFC)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasDate
+                ? AppColors.kPrimaryColor.withValues(alpha: 0.4)
+                : AppColors.kGreyColor.withValues(alpha: 0.2),
+            width: hasDate ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_rounded,
+              size: 14,
+              color: hasDate ? AppColors.kPrimaryColor : AppColors.kGreyColor,
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    label,
+                    fontSize: 10,
+                    color: AppColors.kGreyColor,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  AppText(
+                    hasDate
+                        ? '${date!.day}/${date!.month}/${date!.year}'
+                        : 'اختر تاريخ',
+                    fontSize: 12,
+                    color: hasDate
+                        ? AppColors.kPrimaryColor
+                        : AppColors.kGreyColor.withValues(alpha: 0.5),
+                    fontWeight:
+                        hasDate ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ],
+              ),
+            ),
+            if (hasDate && onClear != null)
+              GestureDetector(
+                onTap: onClear,
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: AppColors.kGreyColor.withValues(alpha: 0.6),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AmountField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool isDark;
+
+  const _AmountField({
+    required this.controller,
+    required this.hint,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontFamily: 'Cairo-Bold',
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: AppColors.kFontColor,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontFamily: 'Cairo-Bold',
+          fontSize: 12,
+          color: AppColors.kGreyColor.withValues(alpha: 0.55),
+          fontWeight: FontWeight.w400,
+        ),
+        filled: true,
+        fillColor: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : const Color(0xFFF8FAFC),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              BorderSide(color: AppColors.kGreyColor.withValues(alpha: 0.2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              BorderSide(color: AppColors.kGreyColor.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppColors.kPrimaryColor,
+            width: 1.5,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -275,7 +1048,11 @@ class _RequestCard extends StatelessWidget {
       label: 'مقبول',
       icon: Icons.check_circle_rounded,
     ),
-    2: (color: AppColors.kRedColor, label: 'مرفوض', icon: Icons.cancel_rounded),
+    2: (
+      color: AppColors.kRedColor,
+      label: 'مرفوض',
+      icon: Icons.cancel_rounded,
+    ),
     3: (
       color: AppColors.kGreyColor,
       label: 'موقوف',
@@ -509,10 +1286,8 @@ class _RequestDetailSheet extends StatelessWidget {
         (color: AppColors.kGreyColor, label: '—');
     final cubit = context.read<ExchangeRequestsCubit>();
 
-    return BlocListener<
-      ExchangeRequestsCubit,
-      SigninState<List<ExchangeRequestModel>>
-    >(
+    return BlocListener<ExchangeRequestsCubit,
+        SigninState<List<ExchangeRequestModel>>>(
       listenWhen: (prev, curr) =>
           prev.maybeWhen(loading: () => true, orElse: () => false),
       listener: (context, state) {
@@ -690,10 +1465,8 @@ class _RequestDetailSheet extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
               const SizedBox(height: 10),
-              BlocBuilder<
-                ExchangeRequestsCubit,
-                SigninState<List<ExchangeRequestModel>>
-              >(
+              BlocBuilder<ExchangeRequestsCubit,
+                  SigninState<List<ExchangeRequestModel>>>(
                 builder: (context, state) {
                   final isLoading = state.maybeWhen(
                     loading: () => true,
@@ -917,7 +1690,10 @@ class _ActionButton extends StatelessWidget {
               SizedBox(
                 width: 14,
                 height: 14,
-                child: CircularProgressIndicator(color: color, strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  color: color,
+                  strokeWidth: 2,
+                ),
               )
             else
               Icon(icon, size: 16, color: color),

@@ -2,6 +2,7 @@ import 'package:exchange_customer/core/constants/base_cubit.dart';
 import 'package:exchange_customer/pages/auth/signin/cubit/signin_state.dart';
 import 'package:exchange_customer/pages/exchange_requests/api/exchange_requests_api.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/create_exchange_request_model.dart';
+import 'package:exchange_customer/pages/exchange_requests/model/exchange_filter_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_request_model.dart';
 import 'package:flutter/material.dart';
@@ -13,10 +14,11 @@ class ExchangeRequestsCubit
   ExchangeRequestsCubit(this.api) : super(const SigninState.initial());
 
   List<ExchangeRequestModel> _all = [];
-  int? statusFilter;
+  ExchangeFilterModel _filter = const ExchangeFilterModel();
+
+  ExchangeFilterModel get filter => _filter;
 
   final TextEditingController amountController = TextEditingController();
-  final TextEditingController notesController = TextEditingController();
 
   Future<void> fetchRequests() async {
     await executeApi(
@@ -30,16 +32,60 @@ class ExchangeRequestsCubit
     );
   }
 
-  void setFilter(int? status) {
-    statusFilter = status;
+  void applyFilter(ExchangeFilterModel filter) {
+    _filter = filter;
     _emitFiltered();
   }
 
   void _emitFiltered() {
-    final filtered = statusFilter == null
-        ? List<ExchangeRequestModel>.from(_all)
-        : _all.where((r) => r.status == statusFilter).toList();
-    emit(SigninState.success(filtered));
+    var list = List<ExchangeRequestModel>.from(_all);
+
+    if (_filter.statuses.isNotEmpty) {
+      list = list.where((r) => _filter.statuses.contains(r.status)).toList();
+    }
+
+    if (_filter.dateFrom != null) {
+      list = list.where((r) {
+        final d = _parseDate(r.createdAt ?? r.createdOn);
+        return d != null && !d.isBefore(_filter.dateFrom!);
+      }).toList();
+    }
+
+    if (_filter.dateTo != null) {
+      final endOfDay = DateTime(
+        _filter.dateTo!.year,
+        _filter.dateTo!.month,
+        _filter.dateTo!.day,
+        23,
+        59,
+        59,
+      );
+      list = list.where((r) {
+        final d = _parseDate(r.createdAt ?? r.createdOn);
+        return d != null && !d.isAfter(endOfDay);
+      }).toList();
+    }
+
+    if (_filter.minAmount != null) {
+      list =
+          list.where((r) => (r.amount ?? 0) >= _filter.minAmount!).toList();
+    }
+
+    if (_filter.maxAmount != null) {
+      list =
+          list.where((r) => (r.amount ?? 0) <= _filter.maxAmount!).toList();
+    }
+
+    emit(SigninState.success(list));
+  }
+
+  DateTime? _parseDate(String? d) {
+    if (d == null) return null;
+    try {
+      return DateTime.parse(d);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> submitRequest({
@@ -53,14 +99,10 @@ class ExchangeRequestsCubit
           fromCurrencyId: fromCurrencyId,
           toCurrencyId: toCurrencyId,
           amount: double.parse(amountController.text),
-          notes: notesController.text.trim().isEmpty
-              ? null
-              : notesController.text.trim(),
         ),
       ),
       onSuccess: (_) async {
         amountController.clear();
-        notesController.clear();
         await fetchRequests();
       },
       onError: (message) => emit(SigninState.error(message)),
@@ -79,27 +121,9 @@ class ExchangeRequestsCubit
     );
   }
 
-  // Future<void> rejectRequest(String id) async {
-  //   await executeApi(
-  //     onLoading: () => emit(const SigninState.loading()),
-  //     request: () => api.rejectRequest(id),
-  //     onSuccess: (_) async => fetchRequests(),
-  //     onError: (message) => emit(SigninState.error(message)),
-  //   );
-  // }
-
-  // Future<void> suspendRequest(String id) async {
-  //   await executeApi(
-  //     onLoading: () => emit(const SigninState.loading()),
-  //     request: () => api.suspendRequest(id),
-  //     onSuccess: (_) async => fetchRequests(),
-  //     onError: (message) => emit(SigninState.error(message)),
-  //   );
-  // }
-
   @override
   Future<void> close() {
-    disposeControllers([amountController, notesController]);
+    disposeControllers([amountController]);
     return super.close();
   }
 }
