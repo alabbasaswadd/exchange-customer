@@ -864,20 +864,30 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Icon(icon, size: 15, color: AppColors.kGreyColor),
+            const SizedBox(width: 6),
+            AppText(
+              label,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
         Container(
-          width: 3,
-          height: 18,
+          height: 2,
+          width: 52,
           decoration: BoxDecoration(
-            color: AppColors.kPrimaryColor,
-            borderRadius: BorderRadius.circular(2),
+            color: const Color(0xFF16A34A),
+            borderRadius: BorderRadius.circular(1),
           ),
         ),
-        const SizedBox(width: 8),
-        Icon(icon, size: 15, color: AppColors.kPrimaryColor),
-        const SizedBox(width: 6),
-        AppText(label, fontSize: 14, fontWeight: FontWeight.w700),
       ],
     );
   }

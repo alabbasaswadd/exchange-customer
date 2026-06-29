@@ -28,43 +28,42 @@ import 'package:go_router/go_router.dart';
 // HOME SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  static const _pkg = 'com.shmacash.shamcash';
-
-  Future<void> _openShamCashSend(BuildContext context) async {
-    const routes = [
-      '/send',
-      '/transfer',
-      '/new-order',
-      '/create-order',
-      '/exchange',
-    ];
-    for (final route in routes) {
-      try {
-        await AndroidIntent(
-          action: 'android.intent.action.MAIN',
-          package: _pkg,
-          componentName: '$_pkg.MainActivity',
-          arguments: <String, dynamic>{'route': route},
-          flags: <int>[
-            Flag.FLAG_ACTIVITY_NEW_TASK,
-            Flag.FLAG_ACTIVITY_CLEAR_TASK,
-          ],
-        ).launch();
-        return;
-      } catch (_) {
-        continue;
-      }
-    }
+Future<void> _launchShamCash(BuildContext context) async {
+  const pkg = 'com.shmacash.shamcash';
+  const routes = [
+    '/send',
+    '/transfer',
+    '/new-order',
+    '/create-order',
+    '/exchange',
+  ];
+  for (final route in routes) {
     try {
-      await LaunchApp.openApp(androidPackageName: _pkg, openStore: false);
+      await AndroidIntent(
+        action: 'android.intent.action.MAIN',
+        package: pkg,
+        componentName: '$pkg.MainActivity',
+        arguments: <String, dynamic>{'route': route},
+        flags: <int>[
+          Flag.FLAG_ACTIVITY_NEW_TASK,
+          Flag.FLAG_ACTIVITY_CLEAR_TASK,
+        ],
+      ).launch();
+      return;
     } catch (_) {
-      if (context.mounted)
-        AppSnackbar.showError(context, 'تطبيق شام كاش غير مثبت');
+      continue;
     }
   }
+  try {
+    await LaunchApp.openApp(androidPackageName: pkg, openStore: false);
+  } catch (_) {
+    if (context.mounted)
+      AppSnackbar.showError(context, 'تطبيق شام كاش غير مثبت');
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                       color: Colors.white,
                       size: 24,
                     ),
-                    onPressed: () => _openShamCashSend(context),
+                    onPressed: () => _launchShamCash(context),
                   ),
                   if (unread > 0)
                     Positioned(
@@ -403,6 +402,8 @@ class _HomeBodyState extends State<_HomeBody>
       ),
     );
   }
+
+  // ── Sham Cash Card ────────────────────────────────────────────────────────
 
   // ── Recent Requests Section ───────────────────────────────────────────────
 
