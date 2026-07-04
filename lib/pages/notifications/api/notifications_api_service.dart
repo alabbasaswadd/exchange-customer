@@ -1,44 +1,19 @@
-// import 'package:dio/dio.dart';
-// import 'package:exchange_customer/core/networking/api_constans.dart';
-// import 'package:exchange_customer/pages/notifications/model/notification_model.dart';
+import 'package:dio/dio.dart';
+import 'package:exchange_customer/core/networking/api_constans.dart';
+import 'package:exchange_customer/pages/notifications/model/notification_list_response_model.dart';
+import 'package:exchange_customer/pages/notifications/model/unread_count_response_model.dart';
+import 'package:retrofit/retrofit.dart';
 
-// class NotificationsApiService {
-//   final Dio _dio;
+part 'notifications_api_service.g.dart';
 
-//   NotificationsApiService(this._dio);
+@RestApi(baseUrl: ApiConstants.apiBaseUrl)
+abstract class NotificationsApiService {
+  factory NotificationsApiService(Dio dio, {String baseUrl}) =
+      _NotificationsApiService;
 
-//   Future<List<NotificationModel>> getNotifications() async {
-//     final response = await _dio.get(ApiConstants.notifications);
-//     return _parseList(response.data, NotificationModel.fromJson);
-//   }
+  @GET(ApiConstants.allNotifications)
+  Future<NotificationListResponseModel> getNotifications();
 
-//   Future<void> markAsRead(String id) async {
-//     await _dio.put('${ApiConstants.notificationMarkAsRead}/$id');
-//   }
-
-//   Future<void> markAllAsRead() async {
-//     await _dio.put(ApiConstants.notificationMarkAllAsRead);
-//   }
-
-//   static List<T> _parseList<T>(
-//     dynamic data,
-//     T Function(Map<String, dynamic>) fromJson,
-//   ) {
-//     if (data is List) {
-//       return data.map((e) => fromJson(e as Map<String, dynamic>)).toList();
-//     }
-//     if (data is Map<String, dynamic>) {
-//       if (data['succeeded'] == false) {
-//         throw Exception(
-//           (data['error'] as Map<String, dynamic>?)?['message'] ??
-//               'فشل تحميل البيانات',
-//         );
-//       }
-//       final list = data['data'];
-//       if (list is List) {
-//         return list.map((e) => fromJson(e as Map<String, dynamic>)).toList();
-//       }
-//     }
-//     return [];
-//   }
-// }
+  @GET(ApiConstants.unreadNotifications)
+  Future<UnreadCountResponseModel> getUnreadCount();
+}

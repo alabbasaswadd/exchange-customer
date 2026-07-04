@@ -15,10 +15,20 @@ class ExchangeRequestsCubit
 
   List<ExchangeRequestModel> _all = [];
   ExchangeFilterModel _filter = const ExchangeFilterModel();
+  int? _statusFilter;
 
   ExchangeFilterModel get filter => _filter;
+  int? get statusFilter => _statusFilter;
+
+  List<ExchangeRequestModel> get acceptedRequests =>
+      _all.where((r) => r.status == 1).toList();
 
   final TextEditingController amountController = TextEditingController();
+
+  void setFilter(int? status) {
+    _statusFilter = status;
+    _emitFiltered();
+  }
 
   Future<void> fetchRequests() async {
     await executeApi(
@@ -40,7 +50,9 @@ class ExchangeRequestsCubit
   void _emitFiltered() {
     var list = List<ExchangeRequestModel>.from(_all);
 
-    if (_filter.statuses.isNotEmpty) {
+    if (_statusFilter != null) {
+      list = list.where((r) => r.status == _statusFilter).toList();
+    } else if (_filter.statuses.isNotEmpty) {
       list = list.where((r) => _filter.statuses.contains(r.status)).toList();
     }
 
@@ -116,6 +128,24 @@ class ExchangeRequestsCubit
     await executeApi(
       onLoading: () => emit(const SigninState.loading()),
       request: () => api.updateRequest(id, data),
+      onSuccess: (_) async => fetchRequests(),
+      onError: (message) => emit(SigninState.error(message)),
+    );
+  }
+
+  Future<void> cancelRequest(String id) async {
+    await executeApi(
+      onLoading: () => emit(const SigninState.loading()),
+      request: () => api.cancelRequest(id),
+      onSuccess: (_) async => fetchRequests(),
+      onError: (message) => emit(SigninState.error(message)),
+    );
+  }
+
+  Future<void> confirmPayment(String id) async {
+    await executeApi(
+      onLoading: () => emit(const SigninState.loading()),
+      request: () => api.confirmPayment(id),
       onSuccess: (_) async => fetchRequests(),
       onError: (message) => emit(SigninState.error(message)),
     );

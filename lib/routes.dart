@@ -53,7 +53,9 @@ final GoRouter router = GoRouter(
           BlocProvider(
             create: (_) => getIt<ExchangeRequestsCubit>()..fetchRequests(),
           ),
-          BlocProvider(create: (_) => getIt<NotificationsCubit>()),
+          BlocProvider(
+            create: (_) => getIt<NotificationsCubit>()..fetchUnreadCount(),
+          ),
         ],
         child: const HomeScreen(),
       ),

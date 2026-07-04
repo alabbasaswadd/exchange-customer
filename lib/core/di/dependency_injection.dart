@@ -10,6 +10,8 @@ import 'package:exchange_customer/pages/exchange_rates/cubit/exchange_rates_cubi
 import 'package:exchange_customer/pages/exchange_requests/api/exchange_requests_api.dart';
 import 'package:exchange_customer/pages/exchange_requests/api/exchange_requests_api_service.dart';
 import 'package:exchange_customer/pages/exchange_requests/cubit/exchange_requests_cubit.dart';
+import 'package:exchange_customer/pages/notifications/api/notifications_api.dart';
+import 'package:exchange_customer/pages/notifications/api/notifications_api_service.dart';
 import 'package:exchange_customer/pages/notifications/cubit/notifications_cubit.dart';
 import 'package:exchange_customer/pages/startup/cubit/startup_cubit.dart';
 import 'package:get_it/get_it.dart';
@@ -35,7 +37,9 @@ Future<void> initDI() async {
 
   getIt.registerFactory(() => StartupCubit());
   getIt.registerFactory(() => SigninCubit(getIt()));
-  getIt.registerFactory(() => NotificationsCubit());
+  getIt.registerLazySingleton(() => NotificationsApiService(getIt()));
+  getIt.registerLazySingleton(() => NotificationsApi(getIt()));
+  getIt.registerFactory(() => NotificationsCubit(getIt()));
   getIt.registerFactory(() => CurrenciesCubit(getIt()));
   getIt.registerFactory(() => ExchangeRatesCubit(getIt()));
   getIt.registerFactory(() => ExchangeRequestsCubit(getIt()));

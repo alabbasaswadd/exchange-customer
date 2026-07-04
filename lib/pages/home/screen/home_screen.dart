@@ -18,7 +18,7 @@ import 'package:exchange_customer/pages/exchange_rates/model/exchange_rate_model
 import 'package:exchange_customer/pages/exchange_requests/cubit/exchange_requests_cubit.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_model.dart';
 import 'package:exchange_customer/pages/notifications/cubit/notifications_cubit.dart';
-import 'package:exchange_customer/pages/notifications/model/notification_model.dart';
+import 'package:exchange_customer/pages/notifications/cubit/notifications_state.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -80,7 +80,7 @@ class HomeScreen extends StatelessWidget {
             ? AppColors.kPrimaryColorDarkMode
             : AppColors.kPrimaryColor,
         actions: [
-          BlocBuilder<NotificationsCubit, List<NotificationModel>>(
+          BlocBuilder<NotificationsCubit, NotificationsState>(
             builder: (context, _) {
               final unread = context.read<NotificationsCubit>().unreadCount;
               return Stack(
@@ -92,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                       color: Colors.white,
                       size: 24,
                     ),
-                    onPressed: () => _launchShamCash(context),
+                    onPressed: () => context.push('/notifications'),
                   ),
                   if (unread > 0)
                     Positioned(
@@ -755,7 +755,7 @@ class _CurrencyRateColumn extends StatelessWidget {
   });
 
   String _fmt(double v) =>
-      v < 100 ? v.toStringAsFixed(3) : v.toStringAsFixed(2);
+      v < 100 ? v.toStringAsFixed(2) : v.toStringAsFixed(2);
 
   @override
   Widget build(BuildContext context) {

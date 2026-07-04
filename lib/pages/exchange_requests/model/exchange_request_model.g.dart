@@ -25,6 +25,7 @@ ExchangeRequestModel _$ExchangeRequestModelFromJson(
   notes: json['notes'] as String?,
   createdOn: json['createdOn'] as String?,
   createdAt: json['createdAt'] as String?,
+  paymentDeadline: json['paymentDeadline'] as String?,
   user: json['user'] == null
       ? null
       : UserModel.fromJson(json['user'] as Map<String, dynamic>),
@@ -55,6 +56,7 @@ Map<String, dynamic> _$ExchangeRequestModelToJson(
   'notes': instance.notes,
   'createdOn': instance.createdOn,
   'createdAt': instance.createdAt,
+  'paymentDeadline': instance.paymentDeadline,
   'user': instance.user,
   'fromCurrency': instance.fromCurrency,
   'toCurrency': instance.toCurrency,

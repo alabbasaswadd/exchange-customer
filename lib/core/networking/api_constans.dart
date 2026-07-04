@@ -15,9 +15,9 @@ class ApiConstants {
   static const String exchangeRequests = "User/ExchangeRequest";
   static const String getExchangeRequests = "User/ExchangeRequest/my-requests";
   // Notifications
-  // static const String notifications = "v1/Notification/GetAll";
-  // static const String notificationMarkAsRead = "v1/Notification/MarkAsRead";
-  // static const String notificationMarkAllAsRead = "v1/Notification/MarkAllAsRead";
+  static const String allNotifications = "User/Notification/my-notifications";
+  static const String unreadNotifications = "User/Notification/unread-count";
+  // static const String markReadNotifications = "User/Notification/mark-all-read";
 
   // Exchange Requests
 }

@@ -31,6 +31,24 @@ class ExchangeRequestsApi extends BaseApi {
     },
   );
 
+  Future<ApiResult<ExchangeRequestResponseModel>> cancelRequest(
+    String id,
+  ) => execute(
+    request: () => _service.updateExchangeRequestStatus(
+      id,
+      const ExchangeRequestRequestModel(newStatus: 7),
+    ),
+  );
+
+  Future<ApiResult<ExchangeRequestResponseModel>> confirmPayment(
+    String id,
+  ) => execute(
+    request: () => _service.updateExchangeRequestStatus(
+      id,
+      const ExchangeRequestRequestModel(newStatus: 2),
+    ),
+  );
+
   // Future<ApiResult<bool>> rejectRequest(String id) => execute(
   //       request: () async {
   //         await _service.rejectRequest(id);
