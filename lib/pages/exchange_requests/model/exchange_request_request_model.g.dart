@@ -15,4 +15,7 @@ ExchangeRequestRequestModel _$ExchangeRequestRequestModelFromJson(
 
 Map<String, dynamic> _$ExchangeRequestRequestModelToJson(
   ExchangeRequestRequestModel instance,
-) => <String, dynamic>{'newStatus': instance.newStatus, 'note': instance.note};
+) => <String, dynamic>{
+  'newStatus': instance.newStatus,
+  'note': instance.note,
+};

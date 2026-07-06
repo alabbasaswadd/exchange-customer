@@ -79,9 +79,9 @@ class _ExchangeRequestsApiService implements ExchangeRequestsApiService {
   }
 
   @override
-  Future<ExchangeRequestResponseModel> updateExchangeRequestStatus(
+  Future<ExchangeRequestResponseModel> confirmExchangeRequestPayment(
     String id,
-    ExchangeRequestRequestModel data,
+    ConfirmPaymentModel data,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -92,7 +92,7 @@ class _ExchangeRequestsApiService implements ExchangeRequestsApiService {
       Options(method: 'PUT', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'User/ExchangeRequest/${id}/status',
+            'User/ExchangeRequest/${id}/confirm-payment',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -124,6 +124,37 @@ class _ExchangeRequestsApiService implements ExchangeRequestsApiService {
           .compose(
             _dio.options,
             'User/ExchangeRequest/${id}',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ExchangeRequestResponseModel _value;
+    try {
+      _value = ExchangeRequestResponseModel.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<ExchangeRequestResponseModel> cancelExchangeRequest(
+    String id,
+    String? request,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    final _data = request;
+    final _options = _setStreamType<ExchangeRequestResponseModel>(
+      Options(method: 'PUT', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'User/ExchangeRequest/${id}/cancel',
             queryParameters: queryParameters,
             data: _data,
           )

@@ -23,6 +23,7 @@ class ExchangeRequestModel {
   final String? createdOn;
   final String? createdAt;
   final String? paymentDeadline;
+  final String? statusChangedAt;
   final UserModel? user;
   final CurrencyModel? fromCurrency;
   final CurrencyModel? toCurrency;
@@ -45,6 +46,7 @@ class ExchangeRequestModel {
     this.createdOn,
     this.createdAt,
     this.paymentDeadline,
+    this.statusChangedAt,
     this.user,
     this.fromCurrency,
     this.toCurrency,

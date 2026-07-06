@@ -62,15 +62,32 @@ const Map<int, _StatusCfg> kExchangeStatusConfig = {
 // REQUEST DETAIL BOTTOM SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 
-class RequestDetailSheet extends StatelessWidget {
+class RequestDetailSheet extends StatefulWidget {
   final ExchangeRequestModel request;
 
   const RequestDetailSheet({super.key, required this.request});
 
   @override
+  State<RequestDetailSheet> createState() => _RequestDetailSheetState();
+}
+
+class _RequestDetailSheetState extends State<RequestDetailSheet> {
+  final TextEditingController _transferNumberController =
+      TextEditingController();
+
+  ExchangeRequestModel get request => widget.request;
+
+  @override
+  void dispose() {
+    _transferNumberController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cfg = kExchangeStatusConfig[request.status] ??
+    final cfg =
+        kExchangeStatusConfig[request.status] ??
         (
           color: AppColors.kGreyColor,
           label: '—',
@@ -78,8 +95,10 @@ class RequestDetailSheet extends StatelessWidget {
         );
     final cubit = context.read<ExchangeRequestsCubit>();
 
-    return BlocListener<ExchangeRequestsCubit,
-        SigninState<List<ExchangeRequestModel>>>(
+    return BlocListener<
+      ExchangeRequestsCubit,
+      SigninState<List<ExchangeRequestModel>>
+    >(
       listenWhen: (prev, curr) =>
           prev.maybeWhen(loading: () => true, orElse: () => false),
       listener: (context, state) {
@@ -117,8 +136,7 @@ class RequestDetailSheet extends StatelessWidget {
             // ── status header card ───────────────────────────────────────────
             Container(
               margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -164,7 +182,9 @@ class RequestDetailSheet extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: cfg.color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -205,8 +225,7 @@ class RequestDetailSheet extends StatelessWidget {
                   const SizedBox(height: 14),
                   // ── exchange amounts ───────────────────────────────────────
                   _AmountsBlock(request: request),
-                  if (request.notes != null &&
-                      request.notes!.isNotEmpty) ...[
+                  if (request.notes != null && request.notes!.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     _DetailRow(
                       icon: Icons.notes_rounded,
@@ -222,8 +241,10 @@ class RequestDetailSheet extends StatelessWidget {
                       color: const Color(0xFFF59E0B),
                     ),
                     const SizedBox(height: 12),
-                    BlocBuilder<ExchangeRequestsCubit,
-                        SigninState<List<ExchangeRequestModel>>>(
+                    BlocBuilder<
+                      ExchangeRequestsCubit,
+                      SigninState<List<ExchangeRequestModel>>
+                    >(
                       builder: (context, state) {
                         final isLoading = state.maybeWhen(
                           loading: () => true,
@@ -242,16 +263,36 @@ class RequestDetailSheet extends StatelessWidget {
                   if (request.status == 1) ...[
                     const SizedBox(height: 20),
                     _SectionTitle(
-                      label: 'أرسل المبلغ قبل انتهاء الوقت',
+                      label: 'أرسل المبلغ وأدخل رقم الحوالة',
                       color: const Color(0xFF3B82F6),
                     ),
                     const SizedBox(height: 12),
-                    _CountdownBanner(
-                      paymentDeadline: request.paymentDeadline,
+                    _ElapsedTimerBanner(
+                      startTime: request.statusChangedAt,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _transferNumberController,
+                      textDirection: TextDirection.ltr,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                        labelText: 'رقم الحوالة',
+                        hintText: 'أدخل رقم الحوالة',
+                        prefixIcon: const Icon(Icons.receipt_long_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    BlocBuilder<ExchangeRequestsCubit,
-                        SigninState<List<ExchangeRequestModel>>>(
+                    BlocBuilder<
+                      ExchangeRequestsCubit,
+                      SigninState<List<ExchangeRequestModel>>
+                    >(
                       builder: (context, state) {
                         final isLoading = state.maybeWhen(
                           loading: () => true,
@@ -277,13 +318,11 @@ class RequestDetailSheet extends StatelessWidget {
     );
   }
 
-  void _confirmCancel(
-      BuildContext context, ExchangeRequestsCubit cubit) {
+  void _confirmCancel(BuildContext context, ExchangeRequestsCubit cubit) {
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const AppText('إلغاء الطلب', fontWeight: FontWeight.w700),
         content: const AppText(
           'هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.',
@@ -297,28 +336,29 @@ class RequestDetailSheet extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(dlgCtx);
-              cubit.cancelRequest(request.id!);
+              cubit.cancelRequest(request.id!, null);
             },
-            child: const AppText('إلغاء الطلب',
-                color: AppColors.kRedColor),
+            child: const AppText('إلغاء الطلب', color: AppColors.kRedColor),
           ),
         ],
       ),
     );
   }
 
-  void _confirmPayment(
-      BuildContext context, ExchangeRequestsCubit cubit) {
+  void _confirmPayment(BuildContext context, ExchangeRequestsCubit cubit) {
+    final transferNumber = _transferNumberController.text.trim();
+    if (transferNumber.isEmpty) {
+      AppSnackbar.showError(context, 'يرجى إدخال رقم الحوالة أولاً');
+      return;
+    }
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title:
-            const AppText('تأكيد الإرسال', fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const AppText('تأكيد الإرسال', fontWeight: FontWeight.w700),
         content: AppText(
-          'هل قمت بإرسال المبلغ ${_fmt(request.amount)} ${request.fromCurrency?.code ?? ''}؟',
-          maxLines: 3,
+          'هل قمت بإرسال المبلغ ${_fmt(request.amount)} ${request.fromCurrency?.code ?? ''}؟\nرقم الحوالة: $transferNumber',
+          maxLines: 4,
         ),
         actions: [
           TextButton(
@@ -328,10 +368,12 @@ class RequestDetailSheet extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(dlgCtx);
-              cubit.confirmPayment(request.id!);
+              cubit.submitTransferNumber(request.id!, transferNumber);
             },
-            child: const AppText('نعم، أرسلت المبلغ',
-                color: AppColors.kSuccessColor),
+            child: const AppText(
+              'نعم، أرسلت المبلغ',
+              color: AppColors.kSuccessColor,
+            ),
           ),
         ],
       ),
@@ -341,16 +383,13 @@ class RequestDetailSheet extends StatelessWidget {
   String _fmt(double? v) {
     if (v == null) return '—';
     final isWhole = v == v.truncateToDouble();
-    final raw =
-        isWhole ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+    final raw = isWhole ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
     final parts = raw.split('.');
     final intWithCommas = parts[0].replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]},',
     );
-    return parts.length > 1
-        ? '$intWithCommas.${parts[1]}'
-        : intWithCommas;
+    return parts.length > 1 ? '$intWithCommas.${parts[1]}' : intWithCommas;
   }
 
   String _fmtDateTime(String? d) {
@@ -369,58 +408,40 @@ class RequestDetailSheet extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COUNTDOWN BANNER  (StatefulWidget — ticks every second)
+// ELAPSED TIMER BANNER  (StatefulWidget — ticks every second)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CountdownBanner extends StatefulWidget {
-  final String? paymentDeadline;
+class _ElapsedTimerBanner extends StatefulWidget {
+  final String? startTime;
 
-  const _CountdownBanner({this.paymentDeadline});
+  const _ElapsedTimerBanner({this.startTime});
 
   @override
-  State<_CountdownBanner> createState() => _CountdownBannerState();
+  State<_ElapsedTimerBanner> createState() => _ElapsedTimerBannerState();
 }
 
-class _CountdownBannerState extends State<_CountdownBanner> {
+class _ElapsedTimerBannerState extends State<_ElapsedTimerBanner> {
   Timer? _timer;
-  Duration _remaining = Duration.zero;
-  bool _expired = false;
+  Duration _elapsed = Duration.zero;
+  late DateTime _start;
 
   @override
   void initState() {
     super.initState();
-    _init();
+    _start = _parseStart();
+    _elapsed = DateTime.now().difference(_start);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => _elapsed = DateTime.now().difference(_start));
+    });
   }
 
-  void _init() {
-    DateTime? deadline;
-    if (widget.paymentDeadline != null) {
+  DateTime _parseStart() {
+    if (widget.startTime != null) {
       try {
-        deadline = DateTime.parse(widget.paymentDeadline!).toLocal();
+        return DateTime.parse(widget.startTime!).toLocal();
       } catch (_) {}
     }
-    deadline ??= DateTime.now().add(const Duration(minutes: 5));
-
-    final now = DateTime.now();
-    final diff = deadline.difference(now);
-    if (diff.isNegative) {
-      _expired = true;
-      _remaining = Duration.zero;
-      return;
-    }
-    _remaining = diff;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final left = deadline!.difference(DateTime.now());
-      if (left.isNegative) {
-        setState(() {
-          _expired = true;
-          _remaining = Duration.zero;
-        });
-        _timer?.cancel();
-      } else {
-        setState(() => _remaining = left);
-      }
-    });
+    return DateTime.now();
   }
 
   @override
@@ -431,16 +452,12 @@ class _CountdownBannerState extends State<_CountdownBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final color = _expired
-        ? AppColors.kRedColor
-        : _remaining.inSeconds < 60
-            ? AppColors.kRedColor
-            : const Color(0xFF3B82F6);
-
-    final minutes =
-        _remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds =
-        _remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    const color = Color(0xFF3B82F6);
+    final hours = _elapsed.inHours.toString().padLeft(2, '0');
+    final minutes = _elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = _elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final display =
+        _elapsed.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
 
     return Container(
       width: double.infinity,
@@ -450,38 +467,30 @@ class _CountdownBannerState extends State<_CountdownBanner> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: _expired
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.timer_off_rounded, color: AppColors.kRedColor,
-                    size: 20),
-                const SizedBox(width: 8),
-                const AppText(
-                  'انتهى وقت الإرسال',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.kRedColor,
-                ),
-              ],
-            )
-          : Column(
-              children: [
-                AppText(
-                  '$minutes:$seconds',
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-                const SizedBox(height: 4),
-                AppText(
-                  'الوقت المتبقي لإرسال المبلغ',
-                  fontSize: 12,
-                  color: color.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w400,
-                ),
-              ],
-            ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.timer_outlined, color: color, size: 18),
+              const SizedBox(width: 6),
+              AppText(
+                display,
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const AppText(
+            'الوقت المنقضي منذ تغيير الحالة',
+            fontSize: 12,
+            color: color,
+            fontWeight: FontWeight.w400,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -596,8 +605,9 @@ class _AmountsBlock extends StatelessWidget {
                             child: AppText(
                               request.toCurrency!.code!,
                               fontSize: 12,
-                              color: AppColors.kSuccessColor
-                                  .withValues(alpha: 0.7),
+                              color: AppColors.kSuccessColor.withValues(
+                                alpha: 0.7,
+                              ),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -654,16 +664,13 @@ class _AmountsBlock extends StatelessWidget {
   String _fmt(double? v) {
     if (v == null) return '—';
     final isWhole = v == v.truncateToDouble();
-    final raw =
-        isWhole ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+    final raw = isWhole ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
     final parts = raw.split('.');
     final intWithCommas = parts[0].replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]},',
     );
-    return parts.length > 1
-        ? '$intWithCommas.${parts[1]}'
-        : intWithCommas;
+    return parts.length > 1 ? '$intWithCommas.${parts[1]}' : intWithCommas;
   }
 
   String _fmtRate(double v) {
@@ -801,8 +808,7 @@ class _ActionButton extends StatelessWidget {
               SizedBox(
                 width: 14,
                 height: 14,
-                child: CircularProgressIndicator(
-                    color: color, strokeWidth: 2),
+                child: CircularProgressIndicator(color: color, strokeWidth: 2),
               )
             else
               Icon(icon, size: 16, color: color),

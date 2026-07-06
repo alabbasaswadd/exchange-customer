@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:exchange_customer/core/networking/api_constans.dart';
+import 'package:exchange_customer/pages/exchange_requests/model/confirm_payment_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/create_exchange_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_list_response_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_request_model.dart';
@@ -22,16 +23,21 @@ abstract class ExchangeRequestsApiService {
     @Body() CreateExchangeRequestModel data,
   );
 
-  @PUT('${ApiConstants.exchangeRequests}/{id}/status')
-  Future<ExchangeRequestResponseModel> updateExchangeRequestStatus(
+  @PUT('${ApiConstants.exchangeRequests}/{id}/confirm-payment')
+  Future<ExchangeRequestResponseModel> confirmExchangeRequestPayment(
     @Path('id') String id,
-    @Body() ExchangeRequestRequestModel data,
+    @Body() ConfirmPaymentModel data,
   );
 
   @PUT('${ApiConstants.exchangeRequests}/{id}')
   Future<ExchangeRequestResponseModel> updateExchangeRequest(
     @Path('id') String id,
     @Body() ExchangeRequestRequestModel request,
+  );
+  @PUT('${ApiConstants.exchangeRequests}/{id}/cancel')
+  Future<ExchangeRequestResponseModel> cancelExchangeRequest(
+    @Path('id') String id,
+    @Body() String? request,
   );
 
   @DELETE('${ApiConstants.exchangeRequests}/{id}')

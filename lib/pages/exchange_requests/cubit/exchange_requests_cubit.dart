@@ -1,6 +1,7 @@
 import 'package:exchange_customer/core/constants/base_cubit.dart';
 import 'package:exchange_customer/pages/auth/signin/cubit/signin_state.dart';
 import 'package:exchange_customer/pages/exchange_requests/api/exchange_requests_api.dart';
+import 'package:exchange_customer/pages/exchange_requests/model/confirm_payment_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/create_exchange_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_filter_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_model.dart';
@@ -79,13 +80,11 @@ class ExchangeRequestsCubit
     }
 
     if (_filter.minAmount != null) {
-      list =
-          list.where((r) => (r.amount ?? 0) >= _filter.minAmount!).toList();
+      list = list.where((r) => (r.amount ?? 0) >= _filter.minAmount!).toList();
     }
 
     if (_filter.maxAmount != null) {
-      list =
-          list.where((r) => (r.amount ?? 0) <= _filter.maxAmount!).toList();
+      list = list.where((r) => (r.amount ?? 0) <= _filter.maxAmount!).toList();
     }
 
     emit(SigninState.success(list));
@@ -133,23 +132,29 @@ class ExchangeRequestsCubit
     );
   }
 
-  Future<void> cancelRequest(String id) async {
+  Future<void> cancelRequest(String id, String? note) async {
     await executeApi(
       onLoading: () => emit(const SigninState.loading()),
-      request: () => api.cancelRequest(id),
+      request: () => api.cancelRequest(id, note),
       onSuccess: (_) async => fetchRequests(),
       onError: (message) => emit(SigninState.error(message)),
     );
   }
 
-  Future<void> confirmPayment(String id) async {
+  Future<void> confirmPayment(String id, ConfirmPaymentModel data) async {
     await executeApi(
       onLoading: () => emit(const SigninState.loading()),
-      request: () => api.confirmPayment(id),
+      request: () => api.confirmPayment(id, data),
       onSuccess: (_) async => fetchRequests(),
       onError: (message) => emit(SigninState.error(message)),
     );
   }
+
+  Future<void> submitTransferNumber(String id, String externalTransactionId) =>
+      confirmPayment(
+        id,
+        ConfirmPaymentModel(transactionNumber: externalTransactionId),
+      );
 
   @override
   Future<void> close() {

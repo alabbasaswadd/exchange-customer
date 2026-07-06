@@ -1,6 +1,7 @@
 import 'package:exchange_customer/core/constants/base_api.dart';
 import 'package:exchange_customer/core/networking/api_result.dart';
 import 'package:exchange_customer/pages/exchange_requests/api/exchange_requests_api_service.dart';
+import 'package:exchange_customer/pages/exchange_requests/model/confirm_payment_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/create_exchange_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_model.dart';
 import 'package:exchange_customer/pages/exchange_requests/model/exchange_request_request_model.dart';
@@ -33,21 +34,13 @@ class ExchangeRequestsApi extends BaseApi {
 
   Future<ApiResult<ExchangeRequestResponseModel>> cancelRequest(
     String id,
-  ) => execute(
-    request: () => _service.updateExchangeRequestStatus(
-      id,
-      const ExchangeRequestRequestModel(newStatus: 7),
-    ),
-  );
+    String? note,
+  ) => execute(request: () => _service.cancelExchangeRequest(id, note ?? ''));
 
   Future<ApiResult<ExchangeRequestResponseModel>> confirmPayment(
     String id,
-  ) => execute(
-    request: () => _service.updateExchangeRequestStatus(
-      id,
-      const ExchangeRequestRequestModel(newStatus: 2),
-    ),
-  );
+    ConfirmPaymentModel data,
+  ) => execute(request: () => _service.confirmExchangeRequestPayment(id, data));
 
   // Future<ApiResult<bool>> rejectRequest(String id) => execute(
   //       request: () async {
